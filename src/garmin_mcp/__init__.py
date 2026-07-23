@@ -245,12 +245,15 @@ def init_api(email, password):
         sys.stderr = io.StringIO()
         sys.stdout = io.StringIO()
 
-        try:
-            garmin = Garmin(is_cn=is_cn)
-            garmin.login(tokenstore)
-        finally:
-            sys.stderr = old_stderr
-            sys.stdout = old_stdout
+      try:
+        print(f"Token length: {len(tokenstore)}", file=sys.stderr)
+        print(f"Starts with 'ey'? {tokenstore.startswith('ey')}", file=sys.stderr)
+
+        garmin = Garmin(is_cn=is_cn)
+        garmin.login(tokenstore)
+    finally:
+        sys.stderr = old_stderr
+        sys.stdout = old_stdout
 
     except (FileNotFoundError, GarminConnectConnectionError, GarminConnectTooManyRequestsError, GarminConnectAuthenticationError):
         # Session is expired. You'll need to log in again
