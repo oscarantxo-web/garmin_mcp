@@ -84,8 +84,12 @@ elif password_file:
         password = password_file.read().rstrip()
 
 tokenstore = os.getenv("GARMINTOKENS") or "~/.garminconnect"
-tokenstore_base64 = os.getenv("GARMINTOKENS_BASE64") or "~/.garminconnect_base64"
+tokenstore_base64 = os.getenv("GARMINTOKENS_BASE64")
 is_cn = os.getenv("GARMIN_IS_CN", "false").lower() in ("true", "1", "yes")
+
+# Si existe un token Base64 en la variable de entorno, usarlo directamente.
+if tokenstore_base64:
+    tokenstore = tokenstore_base64
 
 
 # --- Tool filtering ---------------------------------------------------------
