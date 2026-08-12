@@ -1116,4 +1116,62 @@ def register_tools(app):
             "trend": trend,
         }, indent=2)
 
+    @app.tool()
+    async def get_performance_summary(date: Optional[str] = None) -> str:
+        """Get a combined Garmin performance summary: VO2Max (running & cycling),
+        Fitness Age (edad física), and Training Readiness (disposición para entrenar).
+
+        Use this when asked about VO2Max, VO2 máximo, edad física, fitness age,
+        predisposición para entrenar, or general Garmin performance metrics.
+
+        Args:
+            date: Date in YYYY-MM-DD format (defaults to today)
+        """
+        target_date = date or datetime.date.today().isoformat()
+        try:
+            # VO2Max + Fitness Age via training status
+            ts = garmin_client.get_training_status(target_date)
+            fa = garmin_client.get_fitnessage_data(target_date)
+            tr = garmin_client.get_training_readiness(target_date)
+
+            result: Dict[str, Any] = {"date": target_date}
+
+            # VO2Max
+            if isinstance(ts, dict):
+                vo2_run = ts.get("vo2MaxPreciseValue") or ts.get("vo2MaxValue")
+                vo2_cycle = ts.get("cyclingVo2MaxValue") or ts.get("vo2MaxCyclingValue")
+                if vo2_run is not None:
+                    result["vo2max_running_ml_kg_min"] = vo2_run
+                if vo2_cycle is not None:
+                    result["vo2max_cycling_ml_kg_min"] = vo2_cycle
+                if ts.get("trainingStatusPhase"):
+                    result["training_status"] = ts["trainingStatusPhase"]
+
+            # Fitness Age
+            if isinstance(fa, dict):
+                fitness_age = fa.get("biologicalAge") or fa.get("fitnessAge")
+                chrono_age = fa.get("chronologicalAge")
+                achievable = fa.get("achievableFitnessAge")
+                if fitness_age is not None:
+                    result["fitness_age_years"] = fitness_age
+                if chrono_age is not None:
+                    result["chronological_age_years"] = chrono_age
+                if achievable is not None:
+                    result["achievable_fitness_age_years"] = achievable
+
+            # Training Readiness
+            if isinstance(tr, dict):
+                score = tr.get("score") or tr.get("readinessScore")
+                level = tr.get("readinessDescription") or tr.get("level")
+                if score is not None:
+                    result["training_readiness_score"] = score
+                if level is not None:
+                    result["training_readiness_level"] = level
+
+            return json.dumps(result, indent=2)
+
+        except Exception as e:
+            return f"Error fetching performance summary for {target_date}: {str(e)}"
+
     return app
+
