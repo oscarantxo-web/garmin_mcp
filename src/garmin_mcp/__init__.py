@@ -87,9 +87,32 @@ tokenstore = os.getenv("GARMINTOKENS") or "~/.garminconnect"
 tokenstore_base64 = os.getenv("GARMINTOKENS_BASE64")
 is_cn = os.getenv("GARMIN_IS_CN", "false").lower() in ("true", "1", "yes")
 
-# Si existe un token Base64 en la variable de entorno, usarlo directamente.
+# Si existe un token Base64 en la variable de entorno, decodificarlo y guardarlo en el tokenstore.
 if tokenstore_base64:
-    tokenstore = tokenstore_base64
+    if tokenstore_base64.startswith("ey") or len(tokenstore_base64) > 100:
+        try:
+            decoded_tokens = base64.b64decode(tokenstore_base64).decode("utf-8")
+            expanded_tokenstore = os.path.expanduser(tokenstore)
+            os.makedirs(expanded_tokenstore, exist_ok=True)
+            token_json_path = os.path.join(expanded_tokenstore, "garmin_tokens.json")
+            with open(token_json_path, "w") as f:
+                f.write(decoded_tokens)
+        except Exception as e:
+            print(f"Error decoding base64 tokens: {e}", file=sys.stderr)
+    else:
+        try:
+            dir_path = os.path.expanduser(tokenstore_base64)
+            if os.path.exists(dir_path):
+                with open(dir_path, "r") as token_file:
+                    content = token_file.read().strip()
+                decoded_tokens = base64.b64decode(content).decode("utf-8")
+                expanded_tokenstore = os.path.expanduser(tokenstore)
+                os.makedirs(expanded_tokenstore, exist_ok=True)
+                token_json_path = os.path.join(expanded_tokenstore, "garmin_tokens.json")
+                with open(token_json_path, "w") as f:
+                    f.write(decoded_tokens)
+        except Exception as e:
+            print(f"Error reading base64 token path: {e}", file=sys.stderr)
 
 
 # --- Tool filtering ---------------------------------------------------------
@@ -305,10 +328,11 @@ def init_api(email, password):
             with open(token_json_path, "r") as f:
                 token_data = f.read()
             token_base64 = base64.b64encode(token_data.encode()).decode()
-            dir_path = os.path.expanduser(tokenstore_base64)
-            with open(dir_path, "w") as token_file:
-                token_file.write(token_base64)
-            os.chmod(dir_path, 0o600)
+            if tokenstore_base64 and not (tokenstore_base64.startswith("ey") or len(tokenstore_base64) > 100):
+                dir_path = os.path.expanduser(tokenstore_base64)
+                with open(dir_path, "w") as token_file:
+                    token_file.write(token_base64)
+                os.chmod(dir_path, 0o600)
             print(
                 f"Oauth tokens encoded as base64 string and saved to '{dir_path}' file for future use. (second method)\n",
                 file=sys.stderr,
