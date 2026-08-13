@@ -87,9 +87,24 @@ tokenstore = os.getenv("GARMINTOKENS") or "~/.garminconnect"
 tokenstore_base64 = os.getenv("GARMINTOKENS_BASE64")
 is_cn = os.getenv("GARMIN_IS_CN", "false").lower() in ("true", "1", "yes")
 
-# Si existe un token Base64 en la variable de entorno, usarlo directamente.
+# Si existe un token Base64 en la variable de entorno, escribirlo en el directorio de tokens.
 if tokenstore_base64:
-    tokenstore = tokenstore_base64
+    import base64
+    try:
+        # Asegurarnos de que el directorio base de tokens existe
+        token_dir = os.path.expanduser("~/.garminconnect")
+        os.makedirs(token_dir, exist_ok=True)
+        
+        # Decodificar el token y escribirlo
+        decoded_tokens = base64.b64decode(tokenstore_base64).decode("utf-8")
+        token_file_path = os.path.join(token_dir, "garmin_tokens.json")
+        with open(token_file_path, "w", encoding="utf-8") as f:
+            f.write(decoded_tokens)
+            
+        tokenstore = "~/.garminconnect"
+    except Exception as e:
+        print(f"Advertencia: No se pudo escribir el token decodificado de GARMINTOKENS_BASE64: {e}", file=sys.stderr)
+        tokenstore = tokenstore_base64
 
 
 # --- Tool filtering ---------------------------------------------------------
