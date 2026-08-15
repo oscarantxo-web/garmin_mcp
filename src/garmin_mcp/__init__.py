@@ -87,16 +87,12 @@ tokenstore = os.getenv("GARMINTOKENS") or "~/.garminconnect"
 tokenstore_base64 = os.getenv("GARMINTOKENS_BASE64")
 is_cn = os.getenv("GARMIN_IS_CN", "false").lower() in ("true", "1", "yes")
 
-# Si existe un token Base64 en la variable de entorno, decodificarlo y guardarlo en el tokenstore.
+decoded_tokens_str = None
+# Si existe un token Base64 en la variable de entorno, decodificarlo y usarlo directamente.
 if tokenstore_base64:
     if tokenstore_base64.startswith("ey") or len(tokenstore_base64) > 100:
         try:
-            decoded_tokens = base64.b64decode(tokenstore_base64).decode("utf-8")
-            expanded_tokenstore = os.path.expanduser(tokenstore)
-            os.makedirs(expanded_tokenstore, exist_ok=True)
-            token_json_path = os.path.join(expanded_tokenstore, "garmin_tokens.json")
-            with open(token_json_path, "w") as f:
-                f.write(decoded_tokens)
+            decoded_tokens_str = base64.b64decode(tokenstore_base64).decode("utf-8")
         except Exception as e:
             print(f"Error decoding base64 tokens: {e}", file=sys.stderr)
     else:
@@ -105,12 +101,7 @@ if tokenstore_base64:
             if os.path.exists(dir_path):
                 with open(dir_path, "r") as token_file:
                     content = token_file.read().strip()
-                decoded_tokens = base64.b64decode(content).decode("utf-8")
-                expanded_tokenstore = os.path.expanduser(tokenstore)
-                os.makedirs(expanded_tokenstore, exist_ok=True)
-                token_json_path = os.path.join(expanded_tokenstore, "garmin_tokens.json")
-                with open(token_json_path, "w") as f:
-                    f.write(decoded_tokens)
+                decoded_tokens_str = base64.b64decode(content).decode("utf-8")
         except Exception as e:
             print(f"Error reading base64 token path: {e}", file=sys.stderr)
 
@@ -267,11 +258,11 @@ def init_api(email, password):
         old_stdout = sys.stdout
         sys.stderr = io.StringIO()
         try:
-            print(f"Token length: {len(tokenstore)}", file=sys.stderr)
-            print(f"Starts with 'ey'? {tokenstore.startswith('ey')}", file=sys.stderr)
-
             garmin = Garmin(is_cn=is_cn)
-            garmin.login(tokenstore)
+            if decoded_tokens_str:
+                garmin.login(decoded_tokens_str)
+            else:
+                garmin.login(tokenstore)
         finally:
             sys.stderr = old_stderr
             sys.stdout = old_stdout
@@ -333,10 +324,15 @@ def init_api(email, password):
                 with open(dir_path, "w") as token_file:
                     token_file.write(token_base64)
                 os.chmod(dir_path, 0o600)
-            print(
-                f"Oauth tokens encoded as base64 string and saved to '{dir_path}' file for future use. (second method)\n",
-                file=sys.stderr,
-            )
+                print(
+                    f"Oauth tokens encoded as base64 string and saved to '{dir_path}' file for future use. (second method)\n",
+                    file=sys.stderr,
+                )
+            else:
+                print(
+                    "Oauth tokens encoded as base64 string generated successfully but not saved because GARMINTOKENS_BASE64 contains raw tokens, not a file path.\n",
+                    file=sys.stderr,
+                )
         except (
             FileNotFoundError,
             GarminConnectConnectionError,
