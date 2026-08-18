@@ -255,7 +255,6 @@ def build_strength_json(
             "endCondition": {"conditionTypeId": 10, "conditionTypeKey": "reps"},
             "endConditionValue": float(reps),
             "targetType": {"workoutTargetTypeId": 1, "workoutTargetTypeKey": "no.target"},
-            "category": "UNASSIGNED",
             "exerciseName": ex_name,
         })
         step_order += 1
