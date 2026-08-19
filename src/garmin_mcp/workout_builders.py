@@ -223,58 +223,262 @@ def build_z2_walk_json(
     }
 
 
-# Simplified internal exercise catalog (English → Garmin exerciseName key or fallback)
-# Garmin strength workouts use exerciseName as a free-text label when the exercise
-# is not in their catalog. For structured strength, we use "Other" (generic) and
-# put the user name in description / exerciseName.
+# =============================================================================
+# CATÁLOGO Y RESOLUTOR DE EJERCICIOS DE FUERZA DE GARMIN CONNECT
+# =============================================================================
+
+EXERCISE_MAP = {
+    # Pecho / Chest
+    "press banca": ("BENCH_PRESS", "BARBELL_BENCH_PRESS"),
+    "press de banca": ("BENCH_PRESS", "BARBELL_BENCH_PRESS"),
+    "bench press": ("BENCH_PRESS", "BARBELL_BENCH_PRESS"),
+    "press pecho": ("BENCH_PRESS", "DUMBBELL_BENCH_PRESS"),
+    "press de pecho": ("BENCH_PRESS", "DUMBBELL_BENCH_PRESS"),
+    "press mancuerna": ("BENCH_PRESS", "DUMBBELL_BENCH_PRESS"),
+    "press mancuernas": ("BENCH_PRESS", "DUMBBELL_BENCH_PRESS"),
+    "dumbbell bench press": ("BENCH_PRESS", "DUMBBELL_BENCH_PRESS"),
+    "press inclinado": ("BENCH_PRESS", "INCLINE_DUMBBELL_BENCH_PRESS"),
+    "incline bench press": ("BENCH_PRESS", "INCLINE_DUMBBELL_BENCH_PRESS"),
+    "flexiones": ("PUSH_UP", "PUSH_UP"),
+    "flexion": ("PUSH_UP", "PUSH_UP"),
+    "flexión": ("PUSH_UP", "PUSH_UP"),
+    "push up": ("PUSH_UP", "PUSH_UP"),
+    "pushup": ("PUSH_UP", "PUSH_UP"),
+    "pushups": ("PUSH_UP", "PUSH_UP"),
+    "aperturas": ("FLYE", "DUMBBELL_FLYE"),
+    "cruces polea": ("FLYE", "CABLE_CROSSOVER"),
+
+    # Espalda / Back
+    "remo mancuerna": ("ROW", "DUMBBELL_ROW"),
+    "remo con mancuerna": ("ROW", "DUMBBELL_ROW"),
+    "remo mancuernas": ("ROW", "DUMBBELL_ROW"),
+    "dumbbell row": ("ROW", "DUMBBELL_ROW"),
+    "remo barra": ("ROW", "BARBELL_ROW"),
+    "remo con barra": ("ROW", "BARBELL_ROW"),
+    "barbell row": ("ROW", "BARBELL_ROW"),
+    "remo": ("ROW", "DUMBBELL_ROW"),
+    "row": ("ROW", "DUMBBELL_ROW"),
+    "jalon": ("PULL_UP", "LAT_PULLDOWN"),
+    "jalón": ("PULL_UP", "LAT_PULLDOWN"),
+    "jalon al pecho": ("PULL_UP", "LAT_PULLDOWN"),
+    "jalón al pecho": ("PULL_UP", "LAT_PULLDOWN"),
+    "lat pulldown": ("PULL_UP", "LAT_PULLDOWN"),
+    "pulldown": ("PULL_UP", "LAT_PULLDOWN"),
+    "dominadas": ("PULL_UP", "PULL_UP"),
+    "dominada": ("PULL_UP", "PULL_UP"),
+    "pull up": ("PULL_UP", "PULL_UP"),
+    "pullup": ("PULL_UP", "PULL_UP"),
+    "pullups": ("PULL_UP", "PULL_UP"),
+    "chin up": ("PULL_UP", "CHIN_UP"),
+    "chinup": ("PULL_UP", "CHIN_UP"),
+    "face pull": ("ROW", "FACE_PULL"),
+    "facepull": ("ROW", "FACE_PULL"),
+
+    # Hombro / Shoulders
+    "press militar": ("SHOULDER_PRESS", "OVERHEAD_BARBELL_PRESS"),
+    "press hombro": ("SHOULDER_PRESS", "OVERHEAD_DUMBBELL_PRESS"),
+    "press hombros": ("SHOULDER_PRESS", "OVERHEAD_DUMBBELL_PRESS"),
+    "shoulder press": ("SHOULDER_PRESS", "OVERHEAD_DUMBBELL_PRESS"),
+    "elevaciones laterales": ("LATERAL_RAISE", "DUMBBELL_LATERAL_RAISE"),
+    "elevacion lateral": ("LATERAL_RAISE", "DUMBBELL_LATERAL_RAISE"),
+    "elevación lateral": ("LATERAL_RAISE", "DUMBBELL_LATERAL_RAISE"),
+    "lateral raise": ("LATERAL_RAISE", "DUMBBELL_LATERAL_RAISE"),
+    "elevaciones frontales": ("LATERAL_RAISE", "FRONT_RAISE"),
+    "pajaros": ("LATERAL_RAISE", "REAR_DELT_RAISE"),
+    "pájaros": ("LATERAL_RAISE", "REAR_DELT_RAISE"),
+
+    # Brazos / Arms (Bíceps y Tríceps)
+    "curl biceps": ("CURL", "BICEPS_CURL"),
+    "curl bíceps": ("CURL", "BICEPS_CURL"),
+    "curl de biceps": ("CURL", "BICEPS_CURL"),
+    "curl de bíceps": ("CURL", "BICEPS_CURL"),
+    "curl mancuerna": ("CURL", "DUMBBELL_BICEPS_CURL"),
+    "curl mancuernas": ("CURL", "DUMBBELL_BICEPS_CURL"),
+    "biceps curl": ("CURL", "BICEPS_CURL"),
+    "curl martillo": ("CURL", "HAMMER_CURL"),
+    "hammer curl": ("CURL", "HAMMER_CURL"),
+    "curl": ("CURL", "BICEPS_CURL"),
+    "extension triceps": ("TRICEPS_EXTENSION", "TRICEPS_EXTENSION"),
+    "extensión tríceps": ("TRICEPS_EXTENSION", "TRICEPS_EXTENSION"),
+    "extension de triceps": ("TRICEPS_EXTENSION", "TRICEPS_EXTENSION"),
+    "extensión de tríceps": ("TRICEPS_EXTENSION", "TRICEPS_EXTENSION"),
+    "extension triceps polea": ("TRICEPS_EXTENSION", "CABLE_TRICEPS_EXTENSION"),
+    "extensión tríceps polea": ("TRICEPS_EXTENSION", "CABLE_TRICEPS_EXTENSION"),
+    "triceps extension": ("TRICEPS_EXTENSION", "TRICEPS_EXTENSION"),
+    "fondos triceps": ("DIP", "BENCH_DIP"),
+    "fondos tríceps": ("DIP", "BENCH_DIP"),
+    "fondos": ("DIP", "CHEST_DIP"),
+    "dips": ("DIP", "CHEST_DIP"),
+    "press frances": ("TRICEPS_EXTENSION", "SKULL_CRUSHER"),
+    "press francés": ("TRICEPS_EXTENSION", "SKULL_CRUSHER"),
+
+    # Piernas / Legs & Glutes
+    "sentadilla": ("SQUAT", "SQUAT"),
+    "sentadillas": ("SQUAT", "SQUAT"),
+    "squat": ("SQUAT", "SQUAT"),
+    "squats": ("SQUAT", "SQUAT"),
+    "sentadilla goblet": ("SQUAT", "GOBLET_SQUAT"),
+    "goblet squat": ("SQUAT", "GOBLET_SQUAT"),
+    "sentadilla barra": ("SQUAT", "BARBELL_BACK_SQUAT"),
+    "prensa": ("LEG_PRESS", "LEG_PRESS"),
+    "prensa piernas": ("LEG_PRESS", "LEG_PRESS"),
+    "leg press": ("LEG_PRESS", "LEG_PRESS"),
+    "extension cuadriceps": ("LEG_CURL", "LEG_EXTENSION"),
+    "extensión cuádriceps": ("LEG_CURL", "LEG_EXTENSION"),
+    "leg extension": ("LEG_CURL", "LEG_EXTENSION"),
+    "curl femoral": ("LEG_CURL", "LEG_CURL"),
+    "leg curl": ("LEG_CURL", "LEG_CURL"),
+    "zancadas": ("LUNGE", "DUMBBELL_LUNGE"),
+    "zancada": ("LUNGE", "DUMBBELL_LUNGE"),
+    "lunges": ("LUNGE", "DUMBBELL_LUNGE"),
+    "lunge": ("LUNGE", "DUMBBELL_LUNGE"),
+    "peso muerto": ("DEADLIFT", "BARBELL_DEADLIFT"),
+    "deadlift": ("DEADLIFT", "BARBELL_DEADLIFT"),
+    "peso muerto rumano": ("DEADLIFT", "ROMANIAN_DEADLIFT"),
+    "hip thrust": ("HIP_RAISE", "BARBELL_HIP_THRUST"),
+    "puente gluteo": ("HIP_RAISE", "GLUTE_BRIDGE"),
+    "puente de glúteo": ("HIP_RAISE", "GLUTE_BRIDGE"),
+    "gemelos": ("CALF_RAISE", "STANDING_CALF_RAISE"),
+    "elevacion talones": ("CALF_RAISE", "STANDING_CALF_RAISE"),
+    "calf raise": ("CALF_RAISE", "STANDING_CALF_RAISE"),
+
+    # Core / Abdominales
+    "plank": ("PLANK", "PLANK"),
+    "plancha": ("PLANK", "PLANK"),
+    "plancha abdominal": ("PLANK", "PLANK"),
+    "plancha lateral": ("PLANK", "SIDE_PLANK"),
+    "side plank": ("PLANK", "SIDE_PLANK"),
+    "abdominales": ("CRUNCH", "CRUNCH"),
+    "crunch": ("CRUNCH", "CRUNCH"),
+    "sit ups": ("SIT_UP", "SIT_UP"),
+    "sit up": ("SIT_UP", "SIT_UP"),
+    "situps": ("SIT_UP", "SIT_UP"),
+    "rueda abdominal": ("CRUNCH", "AB_WHEEL"),
+    "ab wheel": ("CRUNCH", "AB_WHEEL"),
+    "elevacion piernas": ("CRUNCH", "LEG_RAISE"),
+    "leg raise": ("CRUNCH", "LEG_RAISE"),
+}
+
+
+def resolve_exercise(name: str):
+    """Resuelve un nombre de ejercicio a su (category, exerciseName) oficial de Garmin Connect."""
+    if not name:
+        return None, None
+    clean = name.strip().lower()
+
+    # 1. Coincidencia exacta en el diccionario
+    if clean in EXERCISE_MAP:
+        return EXERCISE_MAP[clean]
+
+    # 2. Coincidencia por contención de subcadenas
+    for k, v in EXERCISE_MAP.items():
+        if k in clean or clean in k:
+            return v
+
+    # 3. Heurística inteligente por palabras clave
+    if "remo" in clean or "row" in clean:
+        return ("ROW", "DUMBBELL_ROW")
+    if "jalon" in clean or "jalón" in clean or "pulldown" in clean:
+        return ("PULL_UP", "LAT_PULLDOWN")
+    if "dominada" in clean or "pull up" in clean or "pullup" in clean:
+        return ("PULL_UP", "PULL_UP")
+    if "press" in clean and ("banca" in clean or "pecho" in clean or "chest" in clean or "bench" in clean):
+        return ("BENCH_PRESS", "DUMBBELL_BENCH_PRESS")
+    if "flexion" in clean or "flexión" in clean or "pushup" in clean or "push up" in clean:
+        return ("PUSH_UP", "PUSH_UP")
+    if "biceps" in clean or "bíceps" in clean or "curl" in clean:
+        return ("CURL", "BICEPS_CURL")
+    if "triceps" in clean or "tríceps" in clean:
+        return ("TRICEPS_EXTENSION", "TRICEPS_EXTENSION")
+    if "sentadilla" in clean or "squat" in clean:
+        return ("SQUAT", "SQUAT")
+    if "prensa" in clean or "leg press" in clean:
+        return ("LEG_PRESS", "LEG_PRESS")
+    if "peso muerto" in clean or "deadlift" in clean:
+        return ("DEADLIFT", "BARBELL_DEADLIFT")
+    if "zancada" in clean or "lunge" in clean:
+        return ("LUNGE", "DUMBBELL_LUNGE")
+    if "plank" in clean or "plancha" in clean:
+        return ("PLANK", "PLANK")
+    if "hombro" in clean or "shoulder" in clean or "militar" in clean:
+        return ("SHOULDER_PRESS", "OVERHEAD_DUMBBELL_PRESS")
+    if "lateral" in clean or "pajaro" in clean or "pájaro" in clean:
+        return ("LATERAL_RAISE", "DUMBBELL_LATERAL_RAISE")
+    if "abdomina" in clean or "crunch" in clean or "sit up" in clean:
+        return ("CRUNCH", "CRUNCH")
+    if "glute" in clean or "glúteo" in clean or "hip thrust" in clean:
+        return ("HIP_RAISE", "BARBELL_HIP_THRUST")
+    if "gemelo" in clean or "calf" in clean:
+        return ("CALF_RAISE", "STANDING_CALF_RAISE")
+
+    return None, None
+
 
 def build_strength_json(
     name: str,
     exercises: List[Dict[str, Any]],
 ) -> dict:
-    """Build the Garmin Connect JSON for a strength workout.
-
-    Each exercise maps to a generic step; if the name is not recognised in the
-    Garmin catalog we use 'Other' and put the original name in exerciseName.
-    """
+    """Build the Garmin Connect JSON for a strength workout with official exercise recognition and individual sets."""
     steps: List[dict] = []
     step_order = 1
 
     for ex in exercises:
         ex_name = ex.get("name", "Exercise")
         sets = int(ex.get("sets", 1))
-        reps = int(ex.get("reps", 1))
+        reps = ex.get("reps")
+        duration_sec = ex.get("seconds") or ex.get("duration_seconds")
         rest_seconds = int(ex.get("rest_seconds", 60))
 
-        # Work step
-        steps.append({
-            "type": "ExecutableStepDTO",
-            "stepOrder": step_order,
-            "stepType": {"stepTypeId": 3, "stepTypeKey": "interval"},
-            "description": f"{ex_name}: {sets} sets x {reps} reps",
-            "endCondition": {"conditionTypeId": 10, "conditionTypeKey": "reps"},
-            "endConditionValue": float(reps),
-            "targetType": {"workoutTargetTypeId": 1, "workoutTargetTypeKey": "no.target"},
-            "exerciseName": ex_name,
-        })
-        step_order += 1
+        # Detectar si es por tiempo (ej. Planchas de 30s) o por repeticiones
+        is_time_based = bool(duration_sec or "plank" in ex_name.lower() or "plancha" in ex_name.lower())
+        target_val = float(duration_sec or reps or 10)
 
-        # Rest step (skip after last exercise)
-        if rest_seconds > 0 and ex != exercises[-1]:
-            steps.append({
+        category, official_ex_name = resolve_exercise(ex_name)
+
+        # Generar cada serie de trabajo individualmente con su descanso
+        for s in range(1, sets + 1):
+            step = {
                 "type": "ExecutableStepDTO",
                 "stepOrder": step_order,
-                "stepType": {"stepTypeId": 4, "stepTypeKey": "recovery"},
-                "description": f"Rest {rest_seconds}s",
-                "endCondition": {"conditionTypeId": 2, "conditionTypeKey": "time"},
-                "endConditionValue": float(rest_seconds),
+                "stepType": {"stepTypeId": 3, "stepTypeKey": "interval"},
                 "targetType": {"workoutTargetTypeId": 1, "workoutTargetTypeKey": "no.target"},
-            })
+            }
+
+            if is_time_based:
+                step["endCondition"] = {"conditionTypeId": 2, "conditionTypeKey": "time"}
+                step["endConditionValue"] = target_val
+                step["description"] = f"{ex_name} ({s}/{sets}): {int(target_val)}s"
+            else:
+                step["endCondition"] = {"conditionTypeId": 10, "conditionTypeKey": "reps"}
+                step["endConditionValue"] = target_val
+                step["description"] = f"{ex_name} ({s}/{sets}): {int(target_val)} reps"
+
+            # Inyectar category y exerciseName oficiales de Garmin si están resueltos
+            if category and official_ex_name:
+                step["category"] = category
+                step["exerciseName"] = official_ex_name
+            elif ex_name:
+                step["exerciseName"] = ex_name
+
+            steps.append(step)
             step_order += 1
+
+            # Añadir paso de recuperación entre series y entre ejercicios
+            if rest_seconds > 0:
+                steps.append({
+                    "type": "ExecutableStepDTO",
+                    "stepOrder": step_order,
+                    "stepType": {"stepTypeId": 4, "stepTypeKey": "recovery"},
+                    "description": f"Descanso {rest_seconds}s",
+                    "endCondition": {"conditionTypeId": 2, "conditionTypeKey": "time"},
+                    "endConditionValue": float(rest_seconds),
+                    "targetType": {"workoutTargetTypeId": 1, "workoutTargetTypeKey": "no.target"},
+                })
+                step_order += 1
 
     return {
         "workoutName": name,
-        "description": f"Strength: {len(exercises)} exercises",
+        "description": f"Fuerza: {len(exercises)} ejercicios",
         "sportType": {"sportTypeId": 5, "sportTypeKey": "strength_training"},
         "workoutSegments": [{
             "segmentOrder": 1,
