@@ -228,40 +228,69 @@ def build_z2_walk_json(
 # =============================================================================
 
 EXERCISE_MAP = {
-    # Pecho / Chest
+    # ── PECHO / CHEST ──
     "press banca": ("BENCH_PRESS", "BARBELL_BENCH_PRESS"),
     "press de banca": ("BENCH_PRESS", "BARBELL_BENCH_PRESS"),
+    "press de banca con barra": ("BENCH_PRESS", "BARBELL_BENCH_PRESS"),
+    "press banca barra": ("BENCH_PRESS", "BARBELL_BENCH_PRESS"),
+    "barbell bench press": ("BENCH_PRESS", "BARBELL_BENCH_PRESS"),
     "bench press": ("BENCH_PRESS", "BARBELL_BENCH_PRESS"),
     "press pecho": ("BENCH_PRESS", "DUMBBELL_BENCH_PRESS"),
     "press de pecho": ("BENCH_PRESS", "DUMBBELL_BENCH_PRESS"),
+    "press de banca con mancuernas": ("BENCH_PRESS", "DUMBBELL_BENCH_PRESS"),
+    "press banca mancuernas": ("BENCH_PRESS", "DUMBBELL_BENCH_PRESS"),
     "press mancuerna": ("BENCH_PRESS", "DUMBBELL_BENCH_PRESS"),
     "press mancuernas": ("BENCH_PRESS", "DUMBBELL_BENCH_PRESS"),
     "dumbbell bench press": ("BENCH_PRESS", "DUMBBELL_BENCH_PRESS"),
     "press inclinado": ("BENCH_PRESS", "INCLINE_DUMBBELL_BENCH_PRESS"),
+    "press inclinado barra": ("BENCH_PRESS", "INCLINE_BARBELL_BENCH_PRESS"),
+    "press banca inclinado": ("BENCH_PRESS", "INCLINE_BARBELL_BENCH_PRESS"),
+    "press inclinado mancuernas": ("BENCH_PRESS", "INCLINE_DUMBBELL_BENCH_PRESS"),
     "incline bench press": ("BENCH_PRESS", "INCLINE_DUMBBELL_BENCH_PRESS"),
+    "press declinado": ("BENCH_PRESS", "DECLINE_BARBELL_BENCH_PRESS"),
     "flexiones": ("PUSH_UP", "PUSH_UP"),
     "flexion": ("PUSH_UP", "PUSH_UP"),
     "flexión": ("PUSH_UP", "PUSH_UP"),
     "push up": ("PUSH_UP", "PUSH_UP"),
     "pushup": ("PUSH_UP", "PUSH_UP"),
     "pushups": ("PUSH_UP", "PUSH_UP"),
+    "flexiones diamante": ("PUSH_UP", "DIAMOND_PUSH_UP"),
     "aperturas": ("FLYE", "DUMBBELL_FLYE"),
+    "aperturas mancuernas": ("FLYE", "DUMBBELL_FLYE"),
+    "aperturas inclinadas": ("FLYE", "INCLINE_DUMBBELL_FLYE"),
     "cruces polea": ("FLYE", "CABLE_CROSSOVER"),
+    "cruces en polea": ("FLYE", "CABLE_CROSSOVER"),
+    "cable crossover": ("FLYE", "CABLE_CROSSOVER"),
+    "fondos paralelas": ("DIP", "CHEST_DIP"),
+    "fondos pecho": ("DIP", "CHEST_DIP"),
+    "chest dip": ("DIP", "CHEST_DIP"),
+    "pullover": ("PULLOVER", "DUMBBELL_PULLOVER"),
 
-    # Espalda / Back
-    "remo mancuerna": ("ROW", "DUMBBELL_ROW"),
+    # ── ESPALDA / BACK ──
+    "remo con barra": ("ROW", "BARBELL_ROW"),
+    "remo barra": ("ROW", "BARBELL_ROW"),
+    "barbell row": ("ROW", "BARBELL_ROW"),
+    "remo inclinado": ("ROW", "BENT_OVER_ROW_WITH_BARBELL"),
+    "remo inclinado barra": ("ROW", "BENT_OVER_ROW_WITH_BARBELL"),
     "remo con mancuerna": ("ROW", "DUMBBELL_ROW"),
+    "remo con mancuernas": ("ROW", "DUMBBELL_ROW"),
+    "remo mancuerna": ("ROW", "DUMBBELL_ROW"),
     "remo mancuernas": ("ROW", "DUMBBELL_ROW"),
     "dumbbell row": ("ROW", "DUMBBELL_ROW"),
-    "remo barra": ("ROW", "BARBELL_ROW"),
-    "remo con barra": ("ROW", "BARBELL_ROW"),
-    "barbell row": ("ROW", "BARBELL_ROW"),
+    "remo sentado": ("ROW", "SEATED_CABLE_ROW"),
+    "remo en polea": ("ROW", "SEATED_CABLE_ROW"),
+    "remo polea baja": ("ROW", "SEATED_CABLE_ROW"),
+    "remo gironda": ("ROW", "SEATED_CABLE_ROW"),
+    "seated cable row": ("ROW", "SEATED_CABLE_ROW"),
+    "remo en t": ("ROW", "T_BAR_ROW"),
+    "remo t": ("ROW", "T_BAR_ROW"),
     "remo": ("ROW", "DUMBBELL_ROW"),
     "row": ("ROW", "DUMBBELL_ROW"),
     "jalon": ("PULL_UP", "LAT_PULLDOWN"),
     "jalón": ("PULL_UP", "LAT_PULLDOWN"),
     "jalon al pecho": ("PULL_UP", "LAT_PULLDOWN"),
     "jalón al pecho": ("PULL_UP", "LAT_PULLDOWN"),
+    "jalon polea": ("PULL_UP", "LAT_PULLDOWN"),
     "lat pulldown": ("PULL_UP", "LAT_PULLDOWN"),
     "pulldown": ("PULL_UP", "LAT_PULLDOWN"),
     "dominadas": ("PULL_UP", "PULL_UP"),
@@ -273,97 +302,186 @@ EXERCISE_MAP = {
     "chinup": ("PULL_UP", "CHIN_UP"),
     "face pull": ("ROW", "FACE_PULL"),
     "facepull": ("ROW", "FACE_PULL"),
+    "pullover polea": ("PULL_UP", "STRAIGHT_ARM_PULLDOWN"),
+    "hiperextensiones": ("HYPEREXTENSION", "HYPEREXTENSION"),
+    "encogimiento de hombros": ("SHRUG", "BARBELL_SHRUG"),
+    "encogimiento hombros barra": ("SHRUG", "BARBELL_SHRUG"),
+    "encogimiento hombros mancuernas": ("SHRUG", "DUMBBELL_SHRUG"),
+    "shrug": ("SHRUG", "BARBELL_SHRUG"),
 
-    # Hombro / Shoulders
+    # ── HOMBRO / SHOULDERS ──
     "press militar": ("SHOULDER_PRESS", "OVERHEAD_BARBELL_PRESS"),
+    "press militar barra": ("SHOULDER_PRESS", "OVERHEAD_BARBELL_PRESS"),
+    "press por encima de la cabeza con barra": ("SHOULDER_PRESS", "OVERHEAD_BARBELL_PRESS"),
+    "overhead barbell press": ("SHOULDER_PRESS", "OVERHEAD_BARBELL_PRESS"),
     "press hombro": ("SHOULDER_PRESS", "OVERHEAD_DUMBBELL_PRESS"),
     "press hombros": ("SHOULDER_PRESS", "OVERHEAD_DUMBBELL_PRESS"),
+    "press con mancuernas por encima de la cabeza": ("SHOULDER_PRESS", "OVERHEAD_DUMBBELL_PRESS"),
+    "press hombro mancuernas": ("SHOULDER_PRESS", "OVERHEAD_DUMBBELL_PRESS"),
     "shoulder press": ("SHOULDER_PRESS", "OVERHEAD_DUMBBELL_PRESS"),
+    "press arnold": ("SHOULDER_PRESS", "ARNOLD_PRESS"),
+    "arnold press": ("SHOULDER_PRESS", "ARNOLD_PRESS"),
     "elevaciones laterales": ("LATERAL_RAISE", "DUMBBELL_LATERAL_RAISE"),
     "elevacion lateral": ("LATERAL_RAISE", "DUMBBELL_LATERAL_RAISE"),
     "elevación lateral": ("LATERAL_RAISE", "DUMBBELL_LATERAL_RAISE"),
     "lateral raise": ("LATERAL_RAISE", "DUMBBELL_LATERAL_RAISE"),
-    "elevaciones frontales": ("LATERAL_RAISE", "FRONT_RAISE"),
+    "elevaciones frontales": ("SHOULDER_PRESS", "DUMBBELL_FRONT_RAISE"),
+    "elevacion frontal": ("SHOULDER_PRESS", "DUMBBELL_FRONT_RAISE"),
+    "front raise": ("SHOULDER_PRESS", "DUMBBELL_FRONT_RAISE"),
     "pajaros": ("LATERAL_RAISE", "REAR_DELT_RAISE"),
     "pájaros": ("LATERAL_RAISE", "REAR_DELT_RAISE"),
+    "pajaros hombro": ("LATERAL_RAISE", "REAR_DELT_RAISE"),
+    "remo al menton": ("SHOULDER_PRESS", "UPRIGHT_ROW"),
+    "remo al mentón": ("SHOULDER_PRESS", "UPRIGHT_ROW"),
 
-    # Brazos / Arms (Bíceps y Tríceps)
+    # ── BRAZOS / ARMS ──
+    "curl de bíceps con barra": ("CURL", "BARBELL_BICEPS_CURL"),
+    "curl biceps barra": ("CURL", "BARBELL_BICEPS_CURL"),
+    "curl bíceps barra": ("CURL", "BARBELL_BICEPS_CURL"),
+    "barbell biceps curl": ("CURL", "BARBELL_BICEPS_CURL"),
+    "curl de bíceps con mancuerna": ("CURL", "DUMBBELL_BICEPS_CURL"),
+    "curl de bíceps con mancuernas": ("CURL", "STANDING_DUMBBELL_BICEPS_CURL"),
+    "curl mancuerna": ("CURL", "DUMBBELL_BICEPS_CURL"),
+    "curl mancuernas": ("CURL", "STANDING_DUMBBELL_BICEPS_CURL"),
+    "dumbbell biceps curl": ("CURL", "DUMBBELL_BICEPS_CURL"),
     "curl biceps": ("CURL", "BICEPS_CURL"),
     "curl bíceps": ("CURL", "BICEPS_CURL"),
-    "curl de biceps": ("CURL", "BICEPS_CURL"),
-    "curl de bíceps": ("CURL", "BICEPS_CURL"),
-    "curl mancuerna": ("CURL", "DUMBBELL_BICEPS_CURL"),
-    "curl mancuernas": ("CURL", "DUMBBELL_BICEPS_CURL"),
     "biceps curl": ("CURL", "BICEPS_CURL"),
     "curl martillo": ("CURL", "HAMMER_CURL"),
     "hammer curl": ("CURL", "HAMMER_CURL"),
+    "curl concentrado": ("CURL", "CONCENTRATION_CURL"),
+    "curl predicador": ("CURL", "PREACHER_CURL"),
+    "curl scott": ("CURL", "PREACHER_CURL"),
+    "curl polea": ("CURL", "CABLE_CURL"),
     "curl": ("CURL", "BICEPS_CURL"),
+    "extension triceps polea": ("TRICEPS_EXTENSION", "TRICEPS_PRESSDOWN"),
+    "extensión tríceps polea": ("TRICEPS_EXTENSION", "TRICEPS_PRESSDOWN"),
+    "jalon triceps": ("TRICEPS_EXTENSION", "TRICEPS_PRESSDOWN"),
+    "jalón tríceps": ("TRICEPS_EXTENSION", "TRICEPS_PRESSDOWN"),
+    "triceps pressdown": ("TRICEPS_EXTENSION", "TRICEPS_PRESSDOWN"),
     "extension triceps": ("TRICEPS_EXTENSION", "TRICEPS_EXTENSION"),
     "extensión tríceps": ("TRICEPS_EXTENSION", "TRICEPS_EXTENSION"),
     "extension de triceps": ("TRICEPS_EXTENSION", "TRICEPS_EXTENSION"),
     "extensión de tríceps": ("TRICEPS_EXTENSION", "TRICEPS_EXTENSION"),
-    "extension triceps polea": ("TRICEPS_EXTENSION", "CABLE_TRICEPS_EXTENSION"),
-    "extensión tríceps polea": ("TRICEPS_EXTENSION", "CABLE_TRICEPS_EXTENSION"),
     "triceps extension": ("TRICEPS_EXTENSION", "TRICEPS_EXTENSION"),
-    "fondos triceps": ("DIP", "BENCH_DIP"),
-    "fondos tríceps": ("DIP", "BENCH_DIP"),
-    "fondos": ("DIP", "CHEST_DIP"),
-    "dips": ("DIP", "CHEST_DIP"),
+    "extension tras nuca": ("TRICEPS_EXTENSION", "OVERHEAD_DUMBBELL_TRICEPS_EXTENSION"),
     "press frances": ("TRICEPS_EXTENSION", "SKULL_CRUSHER"),
     "press francés": ("TRICEPS_EXTENSION", "SKULL_CRUSHER"),
+    "fondos triceps": ("DIP", "BENCH_DIP"),
+    "fondos tríceps": ("DIP", "BENCH_DIP"),
+    "fondos en banco": ("DIP", "BENCH_DIP"),
+    "dips": ("DIP", "CHEST_DIP"),
 
-    # Piernas / Legs & Glutes
+    # ── PIERNAS Y GLÚTEO / LEGS & GLUTES ──
+    "sentadilla trasera": ("SQUAT", "BARBELL_BACK_SQUAT"),
+    "sentadilla con barra": ("SQUAT", "BARBELL_BACK_SQUAT"),
+    "sentadilla barra": ("SQUAT", "BARBELL_BACK_SQUAT"),
+    "barbell back squat": ("SQUAT", "BARBELL_BACK_SQUAT"),
+    "sentadilla con mancuernas": ("SQUAT", "DUMBBELL_SQUAT"),
+    "sentadilla mancuernas": ("SQUAT", "DUMBBELL_SQUAT"),
+    "dumbbell squat": ("SQUAT", "DUMBBELL_SQUAT"),
+    "sentadilla goblet": ("SQUAT", "GOBLET_SQUAT"),
+    "goblet squat": ("SQUAT", "GOBLET_SQUAT"),
+    "sentadilla frontal": ("SQUAT", "FRONT_SQUAT"),
+    "front squat": ("SQUAT", "FRONT_SQUAT"),
+    "sentadilla bulgara": ("LUNGE", "BULGARIAN_SPLIT_SQUAT"),
+    "sentadilla búlgara": ("LUNGE", "BULGARIAN_SPLIT_SQUAT"),
+    "bulgarian split squat": ("LUNGE", "BULGARIAN_SPLIT_SQUAT"),
     "sentadilla": ("SQUAT", "SQUAT"),
     "sentadillas": ("SQUAT", "SQUAT"),
     "squat": ("SQUAT", "SQUAT"),
     "squats": ("SQUAT", "SQUAT"),
-    "sentadilla goblet": ("SQUAT", "GOBLET_SQUAT"),
-    "goblet squat": ("SQUAT", "GOBLET_SQUAT"),
-    "sentadilla barra": ("SQUAT", "BARBELL_BACK_SQUAT"),
     "prensa": ("LEG_PRESS", "LEG_PRESS"),
+    "prensa de piernas": ("LEG_PRESS", "LEG_PRESS"),
     "prensa piernas": ("LEG_PRESS", "LEG_PRESS"),
     "leg press": ("LEG_PRESS", "LEG_PRESS"),
     "extension cuadriceps": ("LEG_CURL", "LEG_EXTENSION"),
     "extensión cuádriceps": ("LEG_CURL", "LEG_EXTENSION"),
+    "extension de cuadriceps": ("LEG_CURL", "LEG_EXTENSION"),
     "leg extension": ("LEG_CURL", "LEG_EXTENSION"),
     "curl femoral": ("LEG_CURL", "LEG_CURL"),
+    "curl femoral tumbado": ("LEG_CURL", "LEG_CURL"),
+    "curl femoral sentado": ("LEG_CURL", "SEATED_LEG_CURL"),
     "leg curl": ("LEG_CURL", "LEG_CURL"),
+    "zancadas con mancuernas": ("LUNGE", "DUMBBELL_LUNGE"),
+    "zancadas mancuernas": ("LUNGE", "DUMBBELL_LUNGE"),
+    "dumbbell lunge": ("LUNGE", "DUMBBELL_LUNGE"),
     "zancadas": ("LUNGE", "DUMBBELL_LUNGE"),
     "zancada": ("LUNGE", "DUMBBELL_LUNGE"),
     "lunges": ("LUNGE", "DUMBBELL_LUNGE"),
     "lunge": ("LUNGE", "DUMBBELL_LUNGE"),
+    "peso muerto con barra": ("DEADLIFT", "BARBELL_DEADLIFT"),
+    "peso muerto barra": ("DEADLIFT", "BARBELL_DEADLIFT"),
+    "barbell deadlift": ("DEADLIFT", "BARBELL_DEADLIFT"),
+    "peso muerto con mancuernas": ("DEADLIFT", "DUMBBELL_DEADLIFT"),
+    "peso muerto mancuernas": ("DEADLIFT", "DUMBBELL_DEADLIFT"),
+    "dumbbell deadlift": ("DEADLIFT", "DUMBBELL_DEADLIFT"),
+    "peso muerto rumano": ("DEADLIFT", "ROMANIAN_DEADLIFT"),
+    "romanian deadlift": ("DEADLIFT", "ROMANIAN_DEADLIFT"),
+    "peso muerto sumo": ("DEADLIFT", "SUMO_DEADLIFT"),
     "peso muerto": ("DEADLIFT", "BARBELL_DEADLIFT"),
     "deadlift": ("DEADLIFT", "BARBELL_DEADLIFT"),
-    "peso muerto rumano": ("DEADLIFT", "ROMANIAN_DEADLIFT"),
-    "hip thrust": ("HIP_RAISE", "BARBELL_HIP_THRUST"),
-    "puente gluteo": ("HIP_RAISE", "GLUTE_BRIDGE"),
+    "levantamiento de barra sobre cadera, en banca": ("HIP_RAISE", "BARBELL_HIP_THRUST_WITH_BENCH"),
+    "hip thrust con barra": ("HIP_RAISE", "BARBELL_HIP_THRUST_WITH_BENCH"),
+    "hip thrust": ("HIP_RAISE", "BARBELL_HIP_THRUST_WITH_BENCH"),
+    "puente de gluteo": ("HIP_RAISE", "GLUTE_BRIDGE"),
     "puente de glúteo": ("HIP_RAISE", "GLUTE_BRIDGE"),
+    "puente gluteo": ("HIP_RAISE", "GLUTE_BRIDGE"),
+    "glute bridge": ("HIP_RAISE", "GLUTE_BRIDGE"),
+    "elevación de talones de pie con barra": ("CALF_RAISE", "STANDING_BARBELL_CALF_RAISE"),
+    "elevacion talones barra": ("CALF_RAISE", "STANDING_BARBELL_CALF_RAISE"),
+    "gemelos de pie": ("CALF_RAISE", "STANDING_BARBELL_CALF_RAISE"),
+    "gemelos sentado": ("CALF_RAISE", "SEATED_CALF_RAISE"),
     "gemelos": ("CALF_RAISE", "STANDING_CALF_RAISE"),
     "elevacion talones": ("CALF_RAISE", "STANDING_CALF_RAISE"),
     "calf raise": ("CALF_RAISE", "STANDING_CALF_RAISE"),
 
-    # Core / Abdominales
+    # ── CORE / ABDOMEN ──
     "plank": ("PLANK", "PLANK"),
     "plancha": ("PLANK", "PLANK"),
     "plancha abdominal": ("PLANK", "PLANK"),
+    "plancha frontal": ("PLANK", "PLANK"),
     "plancha lateral": ("PLANK", "SIDE_PLANK"),
     "side plank": ("PLANK", "SIDE_PLANK"),
     "abdominales": ("CRUNCH", "CRUNCH"),
     "crunch": ("CRUNCH", "CRUNCH"),
+    "crunch abdominal": ("CRUNCH", "CRUNCH"),
+    "crunch en polea": ("CRUNCH", "CABLE_CRUNCH"),
     "sit ups": ("SIT_UP", "SIT_UP"),
     "sit up": ("SIT_UP", "SIT_UP"),
     "situps": ("SIT_UP", "SIT_UP"),
     "rueda abdominal": ("CRUNCH", "AB_WHEEL"),
     "ab wheel": ("CRUNCH", "AB_WHEEL"),
     "elevacion piernas": ("CRUNCH", "LEG_RAISE"),
+    "elevación de piernas": ("CRUNCH", "LEG_RAISE"),
     "leg raise": ("CRUNCH", "LEG_RAISE"),
+    "russian twist": ("CRUNCH", "RUSSIAN_TWIST"),
+    "giros rusos": ("CRUNCH", "RUSSIAN_TWIST"),
+    "deadbug": ("CRUNCH", "DEAD_BUG"),
+    "bird dog": ("PLANK", "BIRD_DOG"),
+
+    # ── OLÍMPICOS Y FUNCIONAL / CROSSFIT ──
+    "arrancada con barra de pesas": ("SNATCH", "BARBELL_SNATCH"),
+    "arrancada con barra": ("SNATCH", "BARBELL_SNATCH"),
+    "arrancada": ("SNATCH", "BARBELL_SNATCH"),
+    "snatch": ("SNATCH", "BARBELL_SNATCH"),
+    "cargada con barra": ("CLEAN", "CLEAN"),
+    "cargada": ("CLEAN", "CLEAN"),
+    "clean": ("CLEAN", "CLEAN"),
+    "kettlebell swing": ("TOTAL_BODY", "KETTLEBELL_SWING"),
+    "swing kettlebell": ("TOTAL_BODY", "KETTLEBELL_SWING"),
+    "burpees": ("CARDIO", "BURPEE"),
+    "burpee": ("CARDIO", "BURPEE"),
+    "salto al cajon": ("TOTAL_BODY", "BOX_JUMP"),
+    "box jump": ("TOTAL_BODY", "BOX_JUMP"),
+    "thruster": ("TOTAL_BODY", "THRUSTER"),
 }
 
 
 def resolve_exercise(name: str):
     """Resuelve un nombre de ejercicio a su (category, exerciseName) oficial de Garmin Connect."""
     if not name:
-        return None, None
+        return "OTHER", ""
     clean = name.strip().lower()
 
     # 1. Coincidencia exacta en el diccionario
@@ -375,7 +493,7 @@ def resolve_exercise(name: str):
         if k in clean or clean in k:
             return v
 
-    # 3. Heurística inteligente por palabras clave
+    # 3. Fallback inteligente por palabras clave para garantizar categoría oficial de Garmin
     if "remo" in clean or "row" in clean:
         return ("ROW", "DUMBBELL_ROW")
     if "jalon" in clean or "jalón" in clean or "pulldown" in clean:
@@ -387,31 +505,44 @@ def resolve_exercise(name: str):
     if "flexion" in clean or "flexión" in clean or "pushup" in clean or "push up" in clean:
         return ("PUSH_UP", "PUSH_UP")
     if "biceps" in clean or "bíceps" in clean or "curl" in clean:
-        return ("CURL", "BICEPS_CURL")
-    if "triceps" in clean or "tríceps" in clean:
-        return ("TRICEPS_EXTENSION", "TRICEPS_EXTENSION")
+        return ("CURL", "STANDING_DUMBBELL_BICEPS_CURL")
+    if "triceps" in clean or "tríceps" in clean or "polea" in clean:
+        return ("TRICEPS_EXTENSION", "TRICEPS_PRESSDOWN")
+    if "bulgara" in clean or "búlgara" in clean:
+        return ("LUNGE", "BULGARIAN_SPLIT_SQUAT")
     if "sentadilla" in clean or "squat" in clean:
-        return ("SQUAT", "SQUAT")
+        return ("SQUAT", "BARBELL_BACK_SQUAT")
     if "prensa" in clean or "leg press" in clean:
         return ("LEG_PRESS", "LEG_PRESS")
+    if "cuadricep" in clean or "cuádricep" in clean:
+        return ("LEG_CURL", "LEG_EXTENSION")
+    if "femoral" in clean or "isquio" in clean:
+        return ("LEG_CURL", "LEG_CURL")
     if "peso muerto" in clean or "deadlift" in clean:
         return ("DEADLIFT", "BARBELL_DEADLIFT")
     if "zancada" in clean or "lunge" in clean:
         return ("LUNGE", "DUMBBELL_LUNGE")
+    if "hip thrust" in clean or "glute" in clean or "glúteo" in clean:
+        return ("HIP_RAISE", "BARBELL_HIP_THRUST_WITH_BENCH")
+    if "gemelo" in clean or "calf" in clean or "talon" in clean or "talón" in clean:
+        return ("CALF_RAISE", "STANDING_BARBELL_CALF_RAISE")
     if "plank" in clean or "plancha" in clean:
         return ("PLANK", "PLANK")
-    if "hombro" in clean or "shoulder" in clean or "militar" in clean:
+    if "hombro" in clean or "shoulder" in clean or "militar" in clean or "arnold" in clean:
         return ("SHOULDER_PRESS", "OVERHEAD_DUMBBELL_PRESS")
-    if "lateral" in clean or "pajaro" in clean or "pájaro" in clean:
+    if "lateral" in clean or "pajaro" in clean or "pájaro" in clean or "frontal" in clean:
         return ("LATERAL_RAISE", "DUMBBELL_LATERAL_RAISE")
-    if "abdomina" in clean or "crunch" in clean or "sit up" in clean:
+    if "shrug" in clean or "trapecio" in clean or "encogimiento" in clean:
+        return ("SHRUG", "BARBELL_SHRUG")
+    if "abdomina" in clean or "crunch" in clean or "sit up" in clean or "situp" in clean:
         return ("CRUNCH", "CRUNCH")
-    if "glute" in clean or "glúteo" in clean or "hip thrust" in clean:
-        return ("HIP_RAISE", "BARBELL_HIP_THRUST")
-    if "gemelo" in clean or "calf" in clean:
-        return ("CALF_RAISE", "STANDING_CALF_RAISE")
+    if "snatch" in clean or "arrancada" in clean:
+        return ("SNATCH", "BARBELL_SNATCH")
+    if "clean" in clean or "cargada" in clean:
+        return ("CLEAN", "CLEAN")
 
-    return None, None
+    # Si todo falla, devolver categoría genérica de fuerza para que nunca quede vacío
+    return ("SQUAT", "")
 
 
 def build_strength_json(
