@@ -566,12 +566,17 @@ def build_strength_json(
 
         category, official_ex_name = resolve_exercise(ex_name)
 
-        # Paso de trabajo de la serie
+        # Paso de trabajo de la serie (con animación oficial de Garmin)
         work_step = {
             "type": "ExecutableStepDTO",
             "stepOrder": step_order + 1 if sets > 1 else step_order,
             "stepType": {"stepTypeId": 3, "stepTypeKey": "interval"},
+            "description": None,
             "targetType": {"workoutTargetTypeId": 1, "workoutTargetTypeKey": "no.target"},
+            "strokeType": {"strokeTypeId": 0, "strokeTypeKey": None, "displayOrder": 0},
+            "equipmentType": {"equipmentTypeId": 0, "equipmentTypeKey": None, "displayOrder": 0},
+            "weightValue": None,
+            "weightUnit": {"unitId": 8, "unitKey": "kilogram", "factor": 1000.0},
         }
 
         if is_time_based:
@@ -594,9 +599,14 @@ def build_strength_json(
                 "type": "ExecutableStepDTO",
                 "stepOrder": step_order + 2 if sets > 1 else step_order + 1,
                 "stepType": {"stepTypeId": 5, "stepTypeKey": "rest"},
+                "description": None,
                 "endCondition": {"conditionTypeId": 2, "conditionTypeKey": "time"},
                 "endConditionValue": float(rest_seconds),
                 "targetType": {"workoutTargetTypeId": 1, "workoutTargetTypeKey": "no.target"},
+                "strokeType": {"strokeTypeId": 0, "strokeTypeKey": None, "displayOrder": 0},
+                "equipmentType": {"equipmentTypeId": 0, "equipmentTypeKey": None, "displayOrder": 0},
+                "weightValue": None,
+                "weightUnit": {"unitId": 8, "unitKey": "kilogram", "factor": 1000.0},
             }
             inner_steps.append(rest_step)
 
