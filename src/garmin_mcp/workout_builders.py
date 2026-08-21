@@ -632,7 +632,9 @@ def build_strength_json(
 
     return {
         "workoutName": name,
-        "description": f"Fuerza: {len(exercises)} ejercicios",
+        "description": None,
+        "workoutProvider": "Garmin",
+        "workoutSourceId": "GGtMeLu",
         "sportType": {"sportTypeId": 5, "sportTypeKey": "strength_training"},
         "workoutSegments": [{
             "segmentOrder": 1,
