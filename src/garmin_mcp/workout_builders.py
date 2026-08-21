@@ -549,7 +549,7 @@ def build_strength_json(
     name: str,
     exercises: List[Dict[str, Any]],
 ) -> dict:
-    """Build the Garmin Connect JSON for a strength workout with official exercise recognition and individual sets."""
+    """Build the Garmin Connect JSON for a strength workout with RepeatGroupDTO and official exercise recognition."""
     steps: List[dict] = []
     step_order = 1
 
@@ -562,50 +562,63 @@ def build_strength_json(
 
         # Detectar si es por tiempo (ej. Planchas de 30s) o por repeticiones
         is_time_based = bool(duration_sec or "plank" in ex_name.lower() or "plancha" in ex_name.lower())
-        target_val = float(duration_sec or reps or 10)
+        target_val = float(duration_sec or reps or (30 if is_time_based else 10))
 
         category, official_ex_name = resolve_exercise(ex_name)
 
-        # Generar cada serie de trabajo individualmente con su descanso
-        for s in range(1, sets + 1):
-            step = {
+        # Paso de trabajo de la serie
+        work_step = {
+            "type": "ExecutableStepDTO",
+            "stepOrder": step_order + 1 if sets > 1 else step_order,
+            "stepType": {"stepTypeId": 3, "stepTypeKey": "interval"},
+            "targetType": {"workoutTargetTypeId": 1, "workoutTargetTypeKey": "no.target"},
+        }
+
+        if is_time_based:
+            work_step["endCondition"] = {"conditionTypeId": 2, "conditionTypeKey": "time"}
+            work_step["endConditionValue"] = target_val
+        else:
+            work_step["endCondition"] = {"conditionTypeId": 10, "conditionTypeKey": "reps"}
+            work_step["endConditionValue"] = target_val
+
+        if category:
+            work_step["category"] = category
+        if official_ex_name:
+            work_step["exerciseName"] = official_ex_name
+
+        inner_steps = [work_step]
+
+        # Paso de descanso entre series (tipo "rest" integrado en el ejercicio)
+        if rest_seconds > 0:
+            rest_step = {
                 "type": "ExecutableStepDTO",
-                "stepOrder": step_order,
-                "stepType": {"stepTypeId": 3, "stepTypeKey": "interval"},
+                "stepOrder": step_order + 2 if sets > 1 else step_order + 1,
+                "stepType": {"stepTypeId": 5, "stepTypeKey": "rest"},
+                "endCondition": {"conditionTypeId": 2, "conditionTypeKey": "time"},
+                "endConditionValue": float(rest_seconds),
                 "targetType": {"workoutTargetTypeId": 1, "workoutTargetTypeKey": "no.target"},
             }
+            inner_steps.append(rest_step)
 
-            if is_time_based:
-                step["endCondition"] = {"conditionTypeId": 2, "conditionTypeKey": "time"}
-                step["endConditionValue"] = target_val
-                step["description"] = f"{ex_name} ({s}/{sets}): {int(target_val)}s"
-            else:
-                step["endCondition"] = {"conditionTypeId": 10, "conditionTypeKey": "reps"}
-                step["endConditionValue"] = target_val
-                step["description"] = f"{ex_name} ({s}/{sets}): {int(target_val)} reps"
-
-            # Inyectar category y exerciseName oficiales de Garmin si están resueltos
-            if category and official_ex_name:
-                step["category"] = category
-                step["exerciseName"] = official_ex_name
-            elif ex_name:
-                step["exerciseName"] = ex_name
-
-            steps.append(step)
-            step_order += 1
-
-            # Añadir paso de recuperación entre series y entre ejercicios
-            if rest_seconds > 0:
-                steps.append({
-                    "type": "ExecutableStepDTO",
-                    "stepOrder": step_order,
-                    "stepType": {"stepTypeId": 4, "stepTypeKey": "recovery"},
-                    "description": f"Descanso {rest_seconds}s",
-                    "endCondition": {"conditionTypeId": 2, "conditionTypeKey": "time"},
-                    "endConditionValue": float(rest_seconds),
-                    "targetType": {"workoutTargetTypeId": 1, "workoutTargetTypeKey": "no.target"},
-                })
-                step_order += 1
+        if sets > 1:
+            # Agrupar las series con RepeatGroupDTO de Garmin Connect
+            group = {
+                "type": "RepeatGroupDTO",
+                "stepOrder": step_order,
+                "stepType": {"stepTypeId": 6, "stepTypeKey": "repeat"},
+                "numberOfIterations": sets,
+                "endCondition": {"conditionTypeId": 7, "conditionTypeKey": "iterations"},
+                "endConditionValue": float(sets),
+                "skipLastRestStep": False,
+                "smartRepeat": False,
+                "workoutSteps": inner_steps,
+            }
+            steps.append(group)
+            step_order += 1 + len(inner_steps)
+        else:
+            # Serie individual única
+            steps.extend(inner_steps)
+            step_order += len(inner_steps)
 
     return {
         "workoutName": name,
