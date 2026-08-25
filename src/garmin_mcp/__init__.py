@@ -8,9 +8,9 @@ import base64
 
 import requests
 try:
-    from fastmcp import FastMCP
-except ImportError:
     from mcp.server.fastmcp import FastMCP
+except ImportError:
+    from fastmcp import FastMCP
 
 from garminconnect import Garmin, GarminConnectAuthenticationError, GarminConnectConnectionError, GarminConnectTooManyRequestsError
 
