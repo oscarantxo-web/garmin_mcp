@@ -563,6 +563,68 @@ def resolve_exercise(name: str):
     return ("SQUAT", "")
 
 
+def parse_strength_text(text: str) -> List[Dict[str, Any]]:
+    """Parsea texto libre con ejercicios de fuerza a una lista de diccionarios estructurados."""
+    import re
+    exercises = []
+    if not text:
+        return exercises
+
+    lines = [l.strip() for l in text.replace(";", "\n").split("\n") if l.strip()]
+    for line in lines:
+        clean_line = re.sub(r'^[•\-\*\d\.\)\s]+', '', line).strip()
+        if not clean_line or len(clean_line) < 3:
+            continue
+
+        rest_sec = 60
+        rest_match = re.search(r'(\d+)\s*s(?:eg)?\s*(?:rest|descanso)|(?:rest|descanso)\s*[:=]?\s*(\d+)\s*s?', clean_line, re.IGNORECASE)
+        if rest_match:
+            rest_sec = int(rest_match.group(1) or rest_match.group(2))
+            clean_line = re.sub(r'[\·\|\,\-]?\s*(\d+\s*s(?:eg)?\s*(?:rest|descanso)|(?:rest|descanso)\s*[:=]?\s*\d+\s*s?)', '', clean_line, flags=re.IGNORECASE).strip()
+
+        # Patrón 3x10 o 3x45s
+        m = re.search(r'(\d+)\s*[xX*×]\s*(\d+)\s*(s|seg|segundos|reps?|repeticiones)?', clean_line, re.IGNORECASE)
+        if m:
+            sets = int(m.group(1))
+            val = int(m.group(2))
+            unit = (m.group(3) or '').lower()
+            ex_name = clean_line[:m.start()].strip(' :-·|,\t')
+            if not ex_name:
+                ex_name = clean_line[m.end():].strip(' :-·|,\t')
+
+            is_time = unit.startswith('s') or 'plank' in ex_name.lower() or 'plancha' in ex_name.lower()
+            ex_dict = {'name': ex_name or clean_line, 'sets': sets, 'rest_seconds': rest_sec}
+            if is_time:
+                ex_dict['seconds'] = val
+            else:
+                ex_dict['reps'] = val
+            exercises.append(ex_dict)
+            continue
+
+        # Patrón 3 series de 10 reps
+        m2 = re.search(r'(\d+)\s*series?\s*(?:de|x)?\s*(\d+)\s*(s|seg|segundos|reps?|repeticiones)?', clean_line, re.IGNORECASE)
+        if m2:
+            sets = int(m2.group(1))
+            val = int(m2.group(2))
+            unit = (m2.group(3) or '').lower()
+            ex_name = clean_line[:m2.start()].strip(' :-·|,\t')
+            if not ex_name:
+                ex_name = clean_line[m2.end():].strip(' :-·|,\t')
+
+            is_time = unit.startswith('s') or 'plank' in ex_name.lower() or 'plancha' in ex_name.lower()
+            ex_dict = {'name': ex_name or clean_line, 'sets': sets, 'rest_seconds': rest_sec}
+            if is_time:
+                ex_dict['seconds'] = val
+            else:
+                ex_dict['reps'] = val
+            exercises.append(ex_dict)
+            continue
+
+        exercises.append({'name': clean_line, 'sets': 3, 'reps': 10, 'rest_seconds': rest_sec})
+
+    return exercises
+
+
 def build_strength_json(
     name: str,
     exercises: List[Dict[str, Any]],
