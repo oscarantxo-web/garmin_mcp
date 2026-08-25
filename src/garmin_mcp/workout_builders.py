@@ -620,7 +620,22 @@ def parse_strength_text(text: str) -> List[Dict[str, Any]]:
             exercises.append(ex_dict)
             continue
 
-        exercises.append({'name': clean_line, 'sets': 3, 'reps': 10, 'rest_seconds': rest_sec})
+        # Patrón '10 repeticiones de sentadilla' o '10 reps sentadillas' o '10 sentadillas'
+        m3 = re.search(r'^(\d+)\s*(?:reps?|repeticiones)?\s*(?:de\s+)?([a-záéíóúñ\s\-_]+)$', clean_line, re.IGNORECASE)
+        if m3:
+            val = int(m3.group(1))
+            ex_name = m3.group(2).strip(' :-·|,\t')
+            ex_name = re.sub(r'^(?:reps?|repeticiones)\s*(?:de\s+)?', '', ex_name, flags=re.IGNORECASE).strip()
+            is_time = 'plank' in ex_name.lower() or 'plancha' in ex_name.lower()
+            ex_dict = {'name': ex_name, 'sets': 1, 'rest_seconds': rest_sec}
+            if is_time:
+                ex_dict['seconds'] = val
+            else:
+                ex_dict['reps'] = val
+            exercises.append(ex_dict)
+            continue
+
+        exercises.append({'name': clean_line, 'sets': 1, 'reps': 10, 'rest_seconds': rest_sec})
 
     return exercises
 
@@ -649,7 +664,7 @@ def build_strength_json(
         # Paso de trabajo de la serie (con animación oficial de Garmin)
         work_step = {
             "type": "ExecutableStepDTO",
-            "stepOrder": step_order + 1 if sets > 1 else step_order,
+            "stepOrder": step_order + 1,
             "stepType": {"stepTypeId": 3, "stepTypeKey": "interval"},
             "description": None,
             "targetType": {"workoutTargetTypeId": 1, "workoutTargetTypeKey": "no.target"},
@@ -677,7 +692,7 @@ def build_strength_json(
         if rest_seconds > 0:
             rest_step = {
                 "type": "ExecutableStepDTO",
-                "stepOrder": step_order + 2 if sets > 1 else step_order + 1,
+                "stepOrder": step_order + 2,
                 "stepType": {"stepTypeId": 5, "stepTypeKey": "rest"},
                 "description": None,
                 "endCondition": {"conditionTypeId": 2, "conditionTypeKey": "time"},
@@ -690,25 +705,20 @@ def build_strength_json(
             }
             inner_steps.append(rest_step)
 
-        if sets > 1:
-            # Agrupar las series con RepeatGroupDTO de Garmin Connect
-            group = {
-                "type": "RepeatGroupDTO",
-                "stepOrder": step_order,
-                "stepType": {"stepTypeId": 6, "stepTypeKey": "repeat"},
-                "numberOfIterations": sets,
-                "endCondition": {"conditionTypeId": 7, "conditionTypeKey": "iterations"},
-                "endConditionValue": float(sets),
-                "skipLastRestStep": False,
-                "smartRepeat": False,
-                "workoutSteps": inner_steps,
-            }
-            steps.append(group)
-            step_order += 1 + len(inner_steps)
-        else:
-            # Serie individual única
-            steps.extend(inner_steps)
-            step_order += len(inner_steps)
+        # Encapsular SIEMPRE con RepeatGroupDTO para que Garmin Connect active la tarjeta oficial y los vídeos
+        group = {
+            "type": "RepeatGroupDTO",
+            "stepOrder": step_order,
+            "stepType": {"stepTypeId": 6, "stepTypeKey": "repeat"},
+            "numberOfIterations": sets,
+            "endCondition": {"conditionTypeId": 7, "conditionTypeKey": "iterations"},
+            "endConditionValue": float(sets),
+            "skipLastRestStep": False,
+            "smartRepeat": False,
+            "workoutSteps": inner_steps,
+        }
+        steps.append(group)
+        step_order += 1 + len(inner_steps)
 
     return {
         "workoutName": name,
