@@ -435,8 +435,10 @@ def main():
     activity_analysis.configure(garmin_client)
 
     # Create the MCP app, wrapped so the env-var filter can drop tools.
-    # host/port only matter for the HTTP transports; stdio ignores them.
-    fastmcp = FastMCP("Garmin Connect v1.0", host=http_host, port=http_port)
+    try:
+        fastmcp = FastMCP("Garmin Connect v1.0", host=http_host, port=http_port)
+    except TypeError:
+        fastmcp = FastMCP("Garmin Connect v1.0")
     app = _ToolFilter(fastmcp, enabled_tools, disabled_tools)
     if enabled_tools:
         print(f"Tool filter: allowlist of {len(enabled_tools)} tool(s).", file=sys.stderr)
