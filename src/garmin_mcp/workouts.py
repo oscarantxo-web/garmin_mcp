@@ -120,8 +120,62 @@ def _fix_repeat_group_step(step: dict) -> None:
         _fix_repeat_group_step(nested)
 
 
+def _sanitize_strength_step(step: dict, resolver) -> None:
+    """Asegura que cada paso de fuerza tenga metadatos oficiales y description=None para animaciones."""
+    if step.get('type') == 'RepeatGroupDTO':
+        for nested in step.get('workoutSteps', []):
+            _sanitize_strength_step(nested, resolver)
+        return
+
+    # Limpiar descripción para activar reproductor de vídeo
+    step['description'] = None
+    
+    # Inyectar metadatos requeridos por el reproductor 3D
+    if 'strokeType' not in step or not step['strokeType']:
+        step['strokeType'] = {'strokeTypeId': 0, 'strokeTypeKey': None, 'displayOrder': 0}
+    if 'equipmentType' not in step or not step['equipmentType']:
+        step['equipmentType'] = {'equipmentTypeId': 0, 'equipmentTypeKey': None, 'displayOrder': 0}
+    if 'weightUnit' not in step or not step['weightUnit']:
+        step['weightUnit'] = {'unitId': 8, 'unitKey': 'kilogram', 'factor': 1000.0}
+
+    # Si el nombre del ejercicio no está resuelto o está en texto libre, resolverlo
+    raw_name = step.get('exerciseName') or step.get('description') or step.get('category')
+    if raw_name:
+        resolved_cat, resolved_name = resolver(raw_name)
+        if resolved_cat and (not step.get('category') or step.get('category') == 'OTHER'):
+            step['category'] = resolved_cat
+        if resolved_name and not step.get('exerciseName'):
+            step['exerciseName'] = resolved_name
+
+    for nested in step.get('workoutSteps', []):
+        _sanitize_strength_step(nested, resolver)
+
+
+def _fix_strength_workout(workout_data: dict) -> None:
+    """Garantiza que cualquier entrenamiento de fuerza lleve la firma oficial de Garmin y animaciones."""
+    sport = workout_data.get('sportType', {})
+    sport_key = sport.get('sportTypeKey') if isinstance(sport, dict) else str(sport)
+    sport_id = sport.get('sportTypeId') if isinstance(sport, dict) else workout_data.get('sportTypeId')
+
+    if sport_key == 'strength_training' or sport_id == 5:
+        if not workout_data.get('workoutProvider'):
+            workout_data['workoutProvider'] = 'Garmin'
+        if not workout_data.get('workoutSourceId'):
+            workout_data['workoutSourceId'] = 'GGtMeLu'
+        workout_data['description'] = None
+
+        try:
+            from garmin_mcp.workout_builders import resolve_exercise
+            for segment in workout_data.get('workoutSegments', []):
+                for step in segment.get('workoutSteps', []):
+                    _sanitize_strength_step(step, resolve_exercise)
+        except Exception:
+            pass
+
+
 def _fix_hr_zone_steps(workout_data: dict) -> None:
-    """Walk all workout steps and fix HR zone target mistakes."""
+    """Walk all workout steps and fix HR zone target mistakes and apply strength sanitization."""
+    _fix_strength_workout(workout_data)
     for segment in workout_data.get('workoutSegments', []):
         for step in segment.get('workoutSteps', []):
             _fix_hr_zone_step(step)
