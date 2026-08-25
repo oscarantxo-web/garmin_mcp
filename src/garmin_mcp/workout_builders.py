@@ -391,18 +391,29 @@ EXERCISE_MAP = {
     "sentadillas": ("SQUAT", "SQUAT"),
     "squat": ("SQUAT", "SQUAT"),
     "squats": ("SQUAT", "SQUAT"),
-    "prensa": ("LEG_PRESS", "LEG_PRESS"),
-    "prensa de piernas": ("LEG_PRESS", "LEG_PRESS"),
-    "prensa piernas": ("LEG_PRESS", "LEG_PRESS"),
-    "leg press": ("LEG_PRESS", "LEG_PRESS"),
+    "prensa": ("SQUAT", "LEG_PRESS"),
+    "prensa de piernas": ("SQUAT", "LEG_PRESS"),
+    "prensa piernas": ("SQUAT", "LEG_PRESS"),
+    "prensa inclinada": ("SQUAT", "LEG_PRESS"),
+    "prensa 45": ("SQUAT", "LEG_PRESS"),
+    "leg press": ("SQUAT", "LEG_PRESS"),
+    "incline leg press": ("SQUAT", "LEG_PRESS"),
     "extension cuadriceps": ("LEG_CURL", "LEG_EXTENSION"),
     "extensión cuádriceps": ("LEG_CURL", "LEG_EXTENSION"),
     "extension de cuadriceps": ("LEG_CURL", "LEG_EXTENSION"),
+    "extensiones de cuadriceps": ("LEG_CURL", "LEG_EXTENSION"),
+    "extensiones cuadriceps": ("LEG_CURL", "LEG_EXTENSION"),
     "leg extension": ("LEG_CURL", "LEG_EXTENSION"),
     "curl femoral": ("LEG_CURL", "LEG_CURL"),
     "curl femoral tumbado": ("LEG_CURL", "LEG_CURL"),
     "curl femoral sentado": ("LEG_CURL", "SEATED_LEG_CURL"),
+    "curl de piernas": ("LEG_CURL", "LEG_CURL"),
     "leg curl": ("LEG_CURL", "LEG_CURL"),
+    "zancadas caminando": ("LUNGE", "WALKING_LUNGE"),
+    "zancada caminando": ("LUNGE", "WALKING_LUNGE"),
+    "zancadas andadas": ("LUNGE", "WALKING_LUNGE"),
+    "walking lunge": ("LUNGE", "WALKING_LUNGE"),
+    "walking lunges": ("LUNGE", "WALKING_LUNGE"),
     "zancadas con mancuernas": ("LUNGE", "DUMBBELL_LUNGE"),
     "zancadas mancuernas": ("LUNGE", "DUMBBELL_LUNGE"),
     "dumbbell lunge": ("LUNGE", "DUMBBELL_LUNGE"),
@@ -458,7 +469,14 @@ EXERCISE_MAP = {
     "russian twist": ("CRUNCH", "RUSSIAN_TWIST"),
     "giros rusos": ("CRUNCH", "RUSSIAN_TWIST"),
     "deadbug": ("CRUNCH", "DEAD_BUG"),
+    "dead bug": ("CRUNCH", "DEAD_BUG"),
+    "dead bugs": ("CRUNCH", "DEAD_BUG"),
+    "dead-bug": ("CRUNCH", "DEAD_BUG"),
+    "bicho muerto": ("CRUNCH", "DEAD_BUG"),
+    "bichos muertos": ("CRUNCH", "DEAD_BUG"),
     "bird dog": ("PLANK", "BIRD_DOG"),
+    "bird-dog": ("PLANK", "BIRD_DOG"),
+    "perro pajaro": ("PLANK", "BIRD_DOG"),
 
     # ── OLÍMPICOS Y FUNCIONAL / CROSSFIT ──
     "arrancada con barra de pesas": ("SNATCH", "BARBELL_SNATCH"),
@@ -783,14 +801,16 @@ def register_tools(app):
         name: str,
         exercises: List[Dict[str, Any]],
     ) -> str:
-        """Create a strength workout and upload it to Garmin Connect.
+        """Create a strength workout with native Garmin 3D animations and mobile videos, and upload it to Garmin Connect.
 
-        Each exercise is mapped to a generic step; unsupported names fallback to
-        "Other" with the original name stored in exerciseName.
+        The server automatically resolves exercise names (in Spanish or English) to Garmin's official catalog
+        with grouped RepeatGroupDTO sets, integrated rest intervals, and official multimedia provider IDs.
+        Pass standard exercise names like 'Sentadilla con barra', 'Prensa de piernas', 'Dead bug', 'Jalón al pecho',
+        'Zancadas caminando', 'Plancha', etc.
 
         Args:
-            name: Workout name
-            exercises: List of dicts with keys: name, sets, reps, rest_seconds
+            name: Workout name (e.g. "Pierna + Core")
+            exercises: List of dicts with keys: name (str), sets (int), reps (int) or seconds (int), rest_seconds (int)
         """
         try:
             workout_json = build_strength_json(name=name, exercises=exercises)
