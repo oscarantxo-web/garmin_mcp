@@ -356,14 +356,16 @@ EXERCISE_MAP = {
     "curl": ("CURL", "BICEPS_CURL"),
     "extension triceps polea": ("TRICEPS_EXTENSION", "TRICEPS_PRESSDOWN"),
     "extensión tríceps polea": ("TRICEPS_EXTENSION", "TRICEPS_PRESSDOWN"),
+    "extension triceps cuerda": ("TRICEPS_EXTENSION", "TRICEPS_PRESSDOWN"),
+    "extensión tríceps cuerda": ("TRICEPS_EXTENSION", "TRICEPS_PRESSDOWN"),
     "jalon triceps": ("TRICEPS_EXTENSION", "TRICEPS_PRESSDOWN"),
     "jalón tríceps": ("TRICEPS_EXTENSION", "TRICEPS_PRESSDOWN"),
     "triceps pressdown": ("TRICEPS_EXTENSION", "TRICEPS_PRESSDOWN"),
-    "extension triceps": ("TRICEPS_EXTENSION", "TRICEPS_EXTENSION"),
-    "extensión tríceps": ("TRICEPS_EXTENSION", "TRICEPS_EXTENSION"),
-    "extension de triceps": ("TRICEPS_EXTENSION", "TRICEPS_EXTENSION"),
-    "extensión de tríceps": ("TRICEPS_EXTENSION", "TRICEPS_EXTENSION"),
-    "triceps extension": ("TRICEPS_EXTENSION", "TRICEPS_EXTENSION"),
+    "extension triceps": ("TRICEPS_EXTENSION", "TRICEPS_PRESSDOWN"),
+    "extensión tríceps": ("TRICEPS_EXTENSION", "TRICEPS_PRESSDOWN"),
+    "extension de triceps": ("TRICEPS_EXTENSION", "TRICEPS_PRESSDOWN"),
+    "extensión de tríceps": ("TRICEPS_EXTENSION", "TRICEPS_PRESSDOWN"),
+    "triceps extension": ("TRICEPS_EXTENSION", "TRICEPS_PRESSDOWN"),
     "extension tras nuca": ("TRICEPS_EXTENSION", "OVERHEAD_DUMBBELL_TRICEPS_EXTENSION"),
     "press frances": ("TRICEPS_EXTENSION", "SKULL_CRUSHER"),
     "press francés": ("TRICEPS_EXTENSION", "SKULL_CRUSHER"),
@@ -587,10 +589,20 @@ def parse_strength_text(text: str) -> List[Dict[str, Any]]:
             continue
 
         rest_sec = 60
-        rest_match = re.search(r'(\d+)\s*s(?:eg)?\s*(?:rest|descanso)|(?:rest|descanso)\s*[:=]?\s*(\d+)\s*s?', clean_line, re.IGNORECASE)
-        if rest_match:
-            rest_sec = int(rest_match.group(1) or rest_match.group(2))
-            clean_line = re.sub(r'[\·\|\,\-]?\s*(\d+\s*s(?:eg)?\s*(?:rest|descanso)|(?:rest|descanso)\s*[:=]?\s*\d+\s*s?)', '', clean_line, flags=re.IGNORECASE).strip()
+        # Extraer descansos en minutos o segundos (ej. "descanso: 2 min", "90s rest", "2' descanso", "60s")
+        rest_m = re.search(r'(?:descanso|rest)\s*[:=]?\s*(\d+)\s*([a-zA-Z\x27\x22]+)?', clean_line, re.IGNORECASE)
+        if not rest_m:
+            rest_m = re.search(r'(\d+)\s*([a-zA-Z\x27\x22]+)?\s*(?:descanso|rest)', clean_line, re.IGNORECASE)
+        if rest_m:
+            val_r = int(rest_m.group(1))
+            unit_r = (rest_m.group(2) or '').lower()
+            if 'min' in unit_r or unit_r == 'm' or unit_r == "'" or (not unit_r and val_r <= 5):
+                rest_sec = val_r * 60
+            else:
+                rest_sec = val_r
+            clean_line = clean_line[:rest_m.start()] + ' ' + clean_line[rest_m.end():]
+            clean_line = re.sub(r'[\(\[\)\]\,\·\|\-]+', ' ', clean_line).strip()
+            clean_line = re.sub(r'\s+', ' ', clean_line)
 
         # Patrón 3x10 o 3x45s
         m = re.search(r'(\d+)\s*[xX*×]\s*(\d+)\s*(s|seg|segundos|reps?|repeticiones)?', clean_line, re.IGNORECASE)
