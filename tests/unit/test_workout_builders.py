@@ -86,6 +86,35 @@ def test_build_strength_json_structure():
     assert steps[0]["type"] == "RepeatGroupDTO"
     assert steps[0]["numberOfIterations"] == 3
     assert steps[0]["workoutSteps"][0]["exerciseName"] == "SQUAT"
+    assert steps[0]["workoutSteps"][0]["endCondition"]["conditionTypeKey"] == "reps"
+    assert steps[0]["workoutSteps"][0]["endConditionValue"] == 12.0
     assert steps[1]["type"] == "RepeatGroupDTO"
     assert steps[1]["numberOfIterations"] == 3
     assert steps[1]["workoutSteps"][0]["exerciseName"] == "PUSH_UP"
+    assert steps[1]["workoutSteps"][0]["endCondition"]["conditionTypeKey"] == "reps"
+    assert steps[1]["workoutSteps"][0]["endConditionValue"] == 15.0
+
+
+def test_build_strength_json_enforces_reps_on_dynamic_and_time_on_isometric():
+    # Squats with seconds mistakenly passed should still be reps!
+    # Plank should be time!
+    result = build_strength_json(
+        name="Fuerza y Core",
+        exercises=[
+            {"name": "Sentadilla con barra", "sets": 4, "seconds": 40, "rest_seconds": 90},
+            {"name": "Plancha abdominal", "sets": 3, "seconds": 45, "rest_seconds": 60},
+        ],
+    )
+    steps = result["workoutSegments"][0]["workoutSteps"]
+    squat_work = steps[0]["workoutSteps"][0]
+    plank_work = steps[1]["workoutSteps"][0]
+
+    # Squat must be REPS, never time!
+    assert squat_work["endCondition"]["conditionTypeKey"] == "reps"
+    assert squat_work["endCondition"]["conditionTypeId"] == 10
+    assert squat_work["endConditionValue"] == 10.0
+
+    # Plank must be TIME
+    assert plank_work["endCondition"]["conditionTypeKey"] == "time"
+    assert plank_work["endCondition"]["conditionTypeId"] == 2
+    assert plank_work["endConditionValue"] == 45.0

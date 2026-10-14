@@ -575,6 +575,18 @@ def resolve_exercise(name: str):
     return ("SQUAT", "")
 
 
+def is_isometric_exercise(name: str, category: str = "") -> bool:
+    """Detecta si un ejercicio de fuerza es isométrico (basado en tiempo/aguante en segundos)."""
+    iso_keywords = [
+        "plank", "plancha", "wall sit", "sentadilla en pared", "sentadilla estatica",
+        "sentadilla estática", "hollow", "dead bug", "isometric", "isométrico", "isometrico",
+        "superman hold", "l-sit", "hang", "colgado", "bridge hold", "puente estatico", "puente estático"
+    ]
+    name_clean = (name or "").lower()
+    cat_clean = (category or "").lower()
+    return any(k in name_clean for k in iso_keywords) or cat_clean == "plank"
+
+
 def parse_strength_text(text: str) -> List[Dict[str, Any]]:
     """Parsea texto libre con ejercicios de fuerza a una lista de diccionarios estructurados."""
     import re
@@ -677,11 +689,24 @@ def build_strength_json(
         duration_sec = ex.get("seconds") or ex.get("duration_seconds")
         rest_seconds = int(ex.get("rest_seconds", 60))
 
-        # Detectar si es por tiempo (ej. Planchas de 30s) o por repeticiones
-        is_time_based = bool(duration_sec or "plank" in ex_name.lower() or "plancha" in ex_name.lower())
-        target_val = float(duration_sec or reps or (30 if is_time_based else 10))
-
         category, official_ex_name = resolve_exercise(ex_name)
+        is_iso = is_isometric_exercise(ex_name, category)
+
+        # En fuerza, las series dinámicas (sentadillas, press banca, peso muerto, etc.)
+        # DEBEN ser siempre por repeticiones (conditionTypeId: 10, reps).
+        # El tiempo (conditionTypeId: 2, time) es EXCLUSIVO para ejercicios isométricos (planchas, wall sit, etc.).
+        if is_iso:
+            is_time_based = True
+            target_val = float(duration_sec or reps or 30.0)
+        else:
+            is_time_based = False
+            if reps is not None:
+                target_val = float(reps)
+            elif duration_sec is not None:
+                # Si se pasó seconds por error a un ejercicio dinámico, interpretamos números pequeños como reps
+                target_val = float(duration_sec) if 5 <= duration_sec <= 25 else 10.0
+            else:
+                target_val = 10.0
 
         # Paso de trabajo de la serie (con animación oficial de Garmin)
         work_step = {
@@ -904,10 +929,17 @@ def register_tools(app):
 
         Args:
             name: Workout name (e.g. "Pierna + Core")
-            exercises: List of dicts with keys: name (str), sets (int), reps (int) or seconds (int), rest_seconds (int)
+            exercises: List of dicts with keys:
+                - name (str): Exercise name (e.g. 'Sentadilla con barra', 'Press banca', 'Plancha')
+                - sets (int): Number of sets / series
+                - reps (int): Repetitions (MANDATORY for dynamic lifts like sentadilla, press banca, peso muerto, dominadas, remo, etc. NEVER use seconds for dynamic exercises!)
+                - seconds (int): Duration in seconds (ONLY for isometric holds like 'Plancha', 'Wall sit', 'Hollow body'. Do NOT use for dynamic lifts!)
+                - rest_seconds (int): Rest between sets in seconds (default 60-90s)
         """
         try:
+            from garmin_mcp.workouts import _fix_strength_workout
             workout_json = build_strength_json(name=name, exercises=exercises)
+            _fix_strength_workout(workout_json)
             result = garmin_client.upload_workout(workout_json)
 
             if isinstance(result, dict):

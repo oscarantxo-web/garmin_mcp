@@ -127,6 +127,7 @@ def _sanitize_strength_step(step: dict, resolver) -> None:
             _sanitize_strength_step(nested, resolver)
         return
 
+    original_desc = step.get('description') or ''
     # Limpiar descripción para activar reproductor de vídeo
     step['description'] = None
     
@@ -139,13 +140,50 @@ def _sanitize_strength_step(step: dict, resolver) -> None:
         step['weightUnit'] = {'unitId': 8, 'unitKey': 'kilogram', 'factor': 1000.0}
 
     # Si el nombre del ejercicio no está resuelto o está en texto libre, resolverlo
-    raw_name = step.get('exerciseName') or step.get('description') or step.get('category')
+    raw_name = step.get('exerciseName') or original_desc or step.get('category')
     if raw_name:
         resolved_cat, resolved_name = resolver(raw_name)
         if resolved_cat and (not step.get('category') or step.get('category') == 'OTHER'):
             step['category'] = resolved_cat
         if resolved_name and not step.get('exerciseName'):
             step['exerciseName'] = resolved_name
+
+    # En ejercicios de fuerza de tipo intervalo (trabajo):
+    # Si viene con endCondition='time', comprobar si es un ejercicio dinámico (sentadilla, banca, etc.).
+    # En ejercicios dinámicos, el tiempo activa una cuenta atrás destructiva en el reloj;
+    # se debe corregir automáticamente a 'reps'. Sólo los isométricos (planchas, wall sit, etc.) usan 'time'.
+    step_type = step.get('stepType', {})
+    step_type_key = step_type.get('stepTypeKey') if isinstance(step_type, dict) else str(step_type)
+    step_type_id = step_type.get('stepTypeId') if isinstance(step_type, dict) else None
+
+    if step_type_key == 'interval' or step_type_id == 3:
+        end_cond = step.get('endCondition', {})
+        cond_key = end_cond.get('conditionTypeKey') if isinstance(end_cond, dict) else str(end_cond)
+        cond_id = end_cond.get('conditionTypeId') if isinstance(end_cond, dict) else None
+
+        if cond_key == 'time' or cond_id == 2:
+            try:
+                import re
+                from garmin_mcp.workout_builders import is_isometric_exercise
+                check_str = f"{step.get('exerciseName') or ''} {step.get('category') or ''} {raw_name or ''} {original_desc}"
+                if not is_isometric_exercise(check_str, step.get('category', '')):
+                    step['endCondition'] = {'conditionTypeId': 10, 'conditionTypeKey': 'reps'}
+                    current_val = step.get('endConditionValue')
+                    
+                    # Intentar rescatar el número de repeticiones de pistas de texto (ej: "12 reps", "4x12", "15 sentadillas")
+                    m_reps = re.search(r'(\d+)\s*(?:reps?|repeticiones)', check_str, re.IGNORECASE)
+                    if not m_reps:
+                        m_reps = re.search(r'[xX*×]\s*(\d+)', check_str)
+
+                    extracted_reps = int(m_reps.group(1)) if m_reps else None
+                    if extracted_reps and 1 <= extracted_reps <= 50:
+                        step['endConditionValue'] = float(extracted_reps)
+                    elif current_val and 3 <= current_val <= 30:
+                        step['endConditionValue'] = float(current_val)
+                    else:
+                        step['endConditionValue'] = 10.0
+            except Exception:
+                pass
 
     for nested in step.get('workoutSteps', []):
         _sanitize_strength_step(nested, resolver)
@@ -722,8 +760,11 @@ def register_tools(app):
           "DUMBBELL_BICEPS_CURL", "DUMBBELL_SHOULDER_PRESS", "BENT_OVER_ROW_WITH_DUMBELL",
           "BODY_WEIGHT_DIP", "BARBELL_SQUAT", "BARBELL_DEADLIFT")
         - "weightValue" (optional): weight as number (e.g. 24.0)
-        - "weightUnit" (optional): {"unitId": 8, "unitKey": "kilogram", "factor": 1000.0}
-        Use endCondition reps (conditionTypeId: 10) for exercises, rest (stepTypeId: 5) between sets.
+        CRITICAL FOR STRENGTH EXERCISES:
+        - Work intervals for dynamic exercises (squats, bench press, deadlift, rows, curls, etc.) MUST use
+          endCondition "reps" (conditionTypeId: 10). NEVER use "time" for dynamic lifts, as it triggers an annoying
+          countdown timer on the Garmin watch that interrupts the set and prevents proper rep tracking.
+        - "time" (conditionTypeId: 2) is ONLY permitted for isometric holds (e.g. Plank) and rest intervals (stepTypeId: 5).
 
         Example strength exercise step:
         {
